@@ -6786,6 +6786,10 @@ get_insert_query_def(Query *query, deparse_context *context,
 		{
 			appendStringInfoString(buf, " DO NOTHING");
 		}
+		else if (confl->action == ONCONFLICT_RETURN)
+		{
+			appendStringInfoString(buf, " DO RETURN");
+		}
 		else
 		{
 			appendStringInfoString(buf, " DO UPDATE SET ");

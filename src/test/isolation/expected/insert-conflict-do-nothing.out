@@ -25,3 +25,49 @@ key|val
 (1 row)
 
 step c2: COMMIT;
+
+starting permutation: doreturn1 doreturn2 c1 select2 c2
+step doreturn1: INSERT INTO ints(key, val) VALUES(1, 'doreturn1') ON CONFLICT (key) DO RETURN RETURNING *;
+key|val      
+---+---------
+  1|doreturn1
+(1 row)
+
+step doreturn2: INSERT INTO ints(key, val) VALUES(1, 'doreturn2') ON CONFLICT (key) DO RETURN RETURNING *; <waiting ...>
+step c1: COMMIT;
+step doreturn2: <... completed>
+key|val      
+---+---------
+  1|doreturn1
+(1 row)
+
+step select2: SELECT * FROM ints;
+key|val      
+---+---------
+  1|doreturn1
+(1 row)
+
+step c2: COMMIT;
+
+starting permutation: doreturn1 doreturn2 a1 select2 c2
+step doreturn1: INSERT INTO ints(key, val) VALUES(1, 'doreturn1') ON CONFLICT (key) DO RETURN RETURNING *;
+key|val      
+---+---------
+  1|doreturn1
+(1 row)
+
+step doreturn2: INSERT INTO ints(key, val) VALUES(1, 'doreturn2') ON CONFLICT (key) DO RETURN RETURNING *; <waiting ...>
+step a1: ABORT;
+step doreturn2: <... completed>
+key|val      
+---+---------
+  1|doreturn2
+(1 row)
+
+step select2: SELECT * FROM ints;
+key|val      
+---+---------
+  1|doreturn2
+(1 row)
+
+step c2: COMMIT;

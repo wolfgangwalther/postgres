@@ -36,6 +36,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
 <phrase>and <replaceable class="parameter">conflict_action</replaceable> is one of:</phrase>
 
     DO NOTHING
+    DO RETURN
     DO UPDATE SET { <replaceable class="parameter">column_name</replaceable> = { <replaceable class="parameter">expression</replaceable> | DEFAULT } |
                     ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = [ ROW ] ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } [, ...] ) |
                     ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = ( <replaceable class="parameter">sub-SELECT</replaceable> )
@@ -336,9 +337,11 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
     <parameter>conflict_target</parameter> is violated, the
     alternative <parameter>conflict_action</parameter> is taken.
     <literal>ON CONFLICT DO NOTHING</literal> simply avoids inserting
-    a row as its alternative action.  <literal>ON CONFLICT DO
-    UPDATE</literal> updates the existing row that conflicts with the
-    row proposed for insertion as its alternative action.
+    a row as its alternative action.  <literal>ON CONFLICT DO RETURN</literal>
+    avoids inserting the row, but returns the row when <literal>RETURNING</literal>
+    is specified.  <literal>ON CONFLICT DO UPDATE</literal> updates the
+    existing row that conflicts with the row proposed for insertion as
+    its alternative action.
    </para>
 
    <para>
@@ -379,7 +382,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
         the alternative action on by choosing <firstterm>arbiter
         indexes</firstterm>.  Either performs <emphasis>unique index
         inference</emphasis>, or names a constraint explicitly.  For
-        <literal>ON CONFLICT DO NOTHING</literal>, it is optional to
+        <literal>DO NOTHING</literal> and <literal>DO RETURN</literal>, it is optional to
         specify a <parameter>conflict_target</parameter>; when
         omitted, conflicts with all usable constraints (and unique
         indexes) are handled.  For <literal>ON CONFLICT DO
@@ -395,8 +398,8 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
        <para>
         <parameter>conflict_action</parameter> specifies an
         alternative <literal>ON CONFLICT</literal> action.  It can be
-        either <literal>DO NOTHING</literal>, or a <literal>DO
-        UPDATE</literal> clause specifying the exact details of the
+        either one of <literal>DO NOTHING</literal> and <literal>DO RETURN</literal>
+        or a <literal>DO UPDATE</literal> clause specifying the exact details of the
         <literal>UPDATE</literal> action to be performed in case of a
         conflict.  The <literal>SET</literal> and
         <literal>WHERE</literal> clauses in <literal>ON CONFLICT DO

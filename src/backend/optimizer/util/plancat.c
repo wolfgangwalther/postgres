@@ -739,6 +739,10 @@ infer_arbiter_indexes(PlannerInfo *root)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("ON CONFLICT DO UPDATE not supported with exclusion constraints")));
+			if (!idxForm->indisunique && onconflict->action == ONCONFLICT_RETURN)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("ON CONFLICT DO RETURN not supported with exclusion constraints")));
 
 			results = lappend_oid(results, idxForm->indexrelid);
 			list_free(indexList);

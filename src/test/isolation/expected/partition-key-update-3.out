@@ -153,3 +153,209 @@ a|b
 2|initial tuple -> moved by session-1
 (2 rows)
 
+
+starting permutation: s2beginrr s3beginrr s1u s2doreturn s1c s2c s3doreturn s3c s2select
+step s2beginrr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s3beginrr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1u: UPDATE foo SET a=2, b=b || ' -> moved by session-1' WHERE a=1;
+step s2doreturn: INSERT INTO foo VALUES(1, 'session-2 doreturn') ON CONFLICT (a) DO RETURN RETURNING *; <waiting ...>
+step s1c: COMMIT;
+step s2doreturn: <... completed>
+a|b                 
+-+------------------
+1|session-2 doreturn
+(1 row)
+
+step s2c: COMMIT;
+step s3doreturn: INSERT INTO foo VALUES(2, 'session-3 doreturn'), (2, 'session-3 doreturn2') ON CONFLICT (a) DO RETURN RETURNING *;
+a|b                                  
+-+-----------------------------------
+2|initial tuple -> moved by session-1
+2|initial tuple -> moved by session-1
+(2 rows)
+
+step s3c: COMMIT;
+step s2select: SELECT * FROM foo ORDER BY a;
+a|b                                  
+-+-----------------------------------
+1|session-2 doreturn                 
+2|initial tuple -> moved by session-1
+(2 rows)
+
+
+starting permutation: s2beginrr s3beginrr s1u s3doreturn s1c s3c s2doreturn s2c s2select
+step s2beginrr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s3beginrr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1u: UPDATE foo SET a=2, b=b || ' -> moved by session-1' WHERE a=1;
+step s3doreturn: INSERT INTO foo VALUES(2, 'session-3 doreturn'), (2, 'session-3 doreturn2') ON CONFLICT (a) DO RETURN RETURNING *; <waiting ...>
+step s1c: COMMIT;
+step s3doreturn: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s3c: COMMIT;
+step s2doreturn: INSERT INTO foo VALUES(1, 'session-2 doreturn') ON CONFLICT (a) DO RETURN RETURNING *;
+a|b                 
+-+------------------
+1|session-2 doreturn
+(1 row)
+
+step s2c: COMMIT;
+step s2select: SELECT * FROM foo ORDER BY a;
+a|b                                  
+-+-----------------------------------
+1|session-2 doreturn                 
+2|initial tuple -> moved by session-1
+(2 rows)
+
+
+starting permutation: s2beginrr s3beginrr s1u s2doreturn s3doreturn s1c s2c s3c s2select
+step s2beginrr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s3beginrr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1u: UPDATE foo SET a=2, b=b || ' -> moved by session-1' WHERE a=1;
+step s2doreturn: INSERT INTO foo VALUES(1, 'session-2 doreturn') ON CONFLICT (a) DO RETURN RETURNING *; <waiting ...>
+step s3doreturn: INSERT INTO foo VALUES(2, 'session-3 doreturn'), (2, 'session-3 doreturn2') ON CONFLICT (a) DO RETURN RETURNING *; <waiting ...>
+step s1c: COMMIT;
+step s2doreturn: <... completed>
+a|b                 
+-+------------------
+1|session-2 doreturn
+(1 row)
+
+step s3doreturn: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s2c: COMMIT;
+step s3c: COMMIT;
+step s2select: SELECT * FROM foo ORDER BY a;
+a|b                                  
+-+-----------------------------------
+1|session-2 doreturn                 
+2|initial tuple -> moved by session-1
+(2 rows)
+
+
+starting permutation: s2beginrr s3beginrr s1u s3doreturn s2doreturn s1c s3c s2c s2select
+step s2beginrr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s3beginrr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1u: UPDATE foo SET a=2, b=b || ' -> moved by session-1' WHERE a=1;
+step s3doreturn: INSERT INTO foo VALUES(2, 'session-3 doreturn'), (2, 'session-3 doreturn2') ON CONFLICT (a) DO RETURN RETURNING *; <waiting ...>
+step s2doreturn: INSERT INTO foo VALUES(1, 'session-2 doreturn') ON CONFLICT (a) DO RETURN RETURNING *; <waiting ...>
+step s1c: COMMIT;
+step s3doreturn: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s2doreturn: <... completed>
+a|b                 
+-+------------------
+1|session-2 doreturn
+(1 row)
+
+step s3c: COMMIT;
+step s2c: COMMIT;
+step s2select: SELECT * FROM foo ORDER BY a;
+a|b                                  
+-+-----------------------------------
+1|session-2 doreturn                 
+2|initial tuple -> moved by session-1
+(2 rows)
+
+
+starting permutation: s2begins s3begins s1u s2doreturn s1c s2c s3doreturn s3c s2select
+step s2begins: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s3begins: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s1u: UPDATE foo SET a=2, b=b || ' -> moved by session-1' WHERE a=1;
+step s2doreturn: INSERT INTO foo VALUES(1, 'session-2 doreturn') ON CONFLICT (a) DO RETURN RETURNING *; <waiting ...>
+step s1c: COMMIT;
+step s2doreturn: <... completed>
+a|b                 
+-+------------------
+1|session-2 doreturn
+(1 row)
+
+step s2c: COMMIT;
+step s3doreturn: INSERT INTO foo VALUES(2, 'session-3 doreturn'), (2, 'session-3 doreturn2') ON CONFLICT (a) DO RETURN RETURNING *;
+a|b                                  
+-+-----------------------------------
+2|initial tuple -> moved by session-1
+2|initial tuple -> moved by session-1
+(2 rows)
+
+step s3c: COMMIT;
+step s2select: SELECT * FROM foo ORDER BY a;
+a|b                                  
+-+-----------------------------------
+1|session-2 doreturn                 
+2|initial tuple -> moved by session-1
+(2 rows)
+
+
+starting permutation: s2begins s3begins s1u s3doreturn s1c s3c s2doreturn s2c s2select
+step s2begins: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s3begins: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s1u: UPDATE foo SET a=2, b=b || ' -> moved by session-1' WHERE a=1;
+step s3doreturn: INSERT INTO foo VALUES(2, 'session-3 doreturn'), (2, 'session-3 doreturn2') ON CONFLICT (a) DO RETURN RETURNING *; <waiting ...>
+step s1c: COMMIT;
+step s3doreturn: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s3c: COMMIT;
+step s2doreturn: INSERT INTO foo VALUES(1, 'session-2 doreturn') ON CONFLICT (a) DO RETURN RETURNING *;
+a|b                 
+-+------------------
+1|session-2 doreturn
+(1 row)
+
+step s2c: COMMIT;
+step s2select: SELECT * FROM foo ORDER BY a;
+a|b                                  
+-+-----------------------------------
+1|session-2 doreturn                 
+2|initial tuple -> moved by session-1
+(2 rows)
+
+
+starting permutation: s2begins s3begins s1u s2doreturn s3doreturn s1c s2c s3c s2select
+step s2begins: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s3begins: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s1u: UPDATE foo SET a=2, b=b || ' -> moved by session-1' WHERE a=1;
+step s2doreturn: INSERT INTO foo VALUES(1, 'session-2 doreturn') ON CONFLICT (a) DO RETURN RETURNING *; <waiting ...>
+step s3doreturn: INSERT INTO foo VALUES(2, 'session-3 doreturn'), (2, 'session-3 doreturn2') ON CONFLICT (a) DO RETURN RETURNING *; <waiting ...>
+step s1c: COMMIT;
+step s2doreturn: <... completed>
+a|b                 
+-+------------------
+1|session-2 doreturn
+(1 row)
+
+step s3doreturn: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s2c: COMMIT;
+step s3c: COMMIT;
+step s2select: SELECT * FROM foo ORDER BY a;
+a|b                                  
+-+-----------------------------------
+1|session-2 doreturn                 
+2|initial tuple -> moved by session-1
+(2 rows)
+
+
+starting permutation: s2begins s3begins s1u s3doreturn s2doreturn s1c s3c s2c s2select
+step s2begins: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s3begins: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s1u: UPDATE foo SET a=2, b=b || ' -> moved by session-1' WHERE a=1;
+step s3doreturn: INSERT INTO foo VALUES(2, 'session-3 doreturn'), (2, 'session-3 doreturn2') ON CONFLICT (a) DO RETURN RETURNING *; <waiting ...>
+step s2doreturn: INSERT INTO foo VALUES(1, 'session-2 doreturn') ON CONFLICT (a) DO RETURN RETURNING *; <waiting ...>
+step s1c: COMMIT;
+step s3doreturn: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step s2doreturn: <... completed>
+a|b                 
+-+------------------
+1|session-2 doreturn
+(1 row)
+
+step s3c: COMMIT;
+step s2c: COMMIT;
+step s2select: SELECT * FROM foo ORDER BY a;
+a|b                                  
+-+-----------------------------------
+1|session-2 doreturn                 
+2|initial tuple -> moved by session-1
+(2 rows)
+

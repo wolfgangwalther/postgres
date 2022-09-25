@@ -12018,6 +12018,16 @@ opt_on_conflict:
 					$$->location = @1;
 				}
 			|
+			ON CONFLICT opt_conf_expr DO RETURN
+				{
+					$$ = makeNode(OnConflictClause);
+					$$->action = ONCONFLICT_RETURN;
+					$$->infer = $3;
+					$$->targetList = NIL;
+					$$->whereClause = NULL;
+					$$->location = @1;
+				}
+			|
 			ON CONFLICT opt_conf_expr DO NOTHING
 				{
 					$$ = makeNode(OnConflictClause);

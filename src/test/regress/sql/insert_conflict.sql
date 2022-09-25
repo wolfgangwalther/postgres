@@ -580,3 +580,22 @@ insert into parted_conflict values(0, 'cero', 1)
 
 drop table parted_conflict;
 drop function parted_conflict_update_func();
+
+-- returning
+
+create table returning_conflicts (key int primary key, derived int generated always as (key + 1) stored);
+insert into returning_conflicts (key) values (1);
+
+-- Fails (no unique index inference specification, required for do update variant):
+insert into returning_conflicts (key) values (1) on conflict do return;
+
+-- same as DO NOTHING
+insert into returning_conflicts (key) values (1) on conflict (key) do return;
+
+-- does not return conflicting rows
+insert into returning_conflicts (key) values (1) on conflict do nothing returning *;
+
+-- returns conflicting rows
+insert into returning_conflicts (key) values (1) on conflict (key) do return returning *;
+
+drop table returning_conflicts;

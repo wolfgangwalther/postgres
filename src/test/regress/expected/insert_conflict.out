@@ -864,3 +864,28 @@ insert into parted_conflict values(0, 'cero', 1)
 NOTICE:  a = 0, b = cero, c = 2
 drop table parted_conflict;
 drop function parted_conflict_update_func();
+-- returning
+create table returning_conflicts (key int primary key, derived int generated always as (key + 1) stored);
+insert into returning_conflicts (key) values (1);
+-- Fails (no unique index inference specification, required for do update variant):
+insert into returning_conflicts (key) values (1) on conflict do return;
+ERROR:  ON CONFLICT DO RETURN requires inference specification or constraint name
+LINE 1: insert into returning_conflicts (key) values (1) on conflict...
+                                                         ^
+HINT:  For example, ON CONFLICT (column_name).
+-- same as DO NOTHING
+insert into returning_conflicts (key) values (1) on conflict (key) do return;
+-- does not return conflicting rows
+insert into returning_conflicts (key) values (1) on conflict do nothing returning *;
+ key | derived 
+-----+---------
+(0 rows)
+
+-- returns conflicting rows
+insert into returning_conflicts (key) values (1) on conflict (key) do return returning *;
+ key | derived 
+-----+---------
+   1 |       2
+(1 row)
+
+drop table returning_conflicts;

@@ -119,3 +119,189 @@ key|val
   1|donothing2
 (1 row)
 
+
+starting permutation: beginrr1 beginrr2 doreturn1 c1 doreturn2 c2 show
+step beginrr1: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step beginrr2: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step doreturn1: INSERT INTO ints(key, val) VALUES(1, 'doreturn1') ON CONFLICT (key) DO RETURN RETURNING *;
+key|val      
+---+---------
+  1|doreturn1
+(1 row)
+
+step c1: COMMIT;
+step doreturn2: INSERT INTO ints(key, val) VALUES(1, 'doreturn2'), (1, 'doreturn3') ON CONFLICT (key) DO RETURN RETURNING *;
+key|val      
+---+---------
+  1|doreturn1
+  1|doreturn1
+(2 rows)
+
+step c2: COMMIT;
+step show: SELECT * FROM ints;
+key|val      
+---+---------
+  1|doreturn1
+(1 row)
+
+
+starting permutation: beginrr1 beginrr2 doreturn2 c2 doreturn1 c1 show
+step beginrr1: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step beginrr2: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step doreturn2: INSERT INTO ints(key, val) VALUES(1, 'doreturn2'), (1, 'doreturn3') ON CONFLICT (key) DO RETURN RETURNING *;
+key|val      
+---+---------
+  1|doreturn2
+  1|doreturn2
+(2 rows)
+
+step c2: COMMIT;
+step doreturn1: INSERT INTO ints(key, val) VALUES(1, 'doreturn1') ON CONFLICT (key) DO RETURN RETURNING *;
+key|val      
+---+---------
+  1|doreturn2
+(1 row)
+
+step c1: COMMIT;
+step show: SELECT * FROM ints;
+key|val      
+---+---------
+  1|doreturn2
+(1 row)
+
+
+starting permutation: beginrr1 beginrr2 doreturn1 doreturn2 c1 c2 show
+step beginrr1: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step beginrr2: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step doreturn1: INSERT INTO ints(key, val) VALUES(1, 'doreturn1') ON CONFLICT (key) DO RETURN RETURNING *;
+key|val      
+---+---------
+  1|doreturn1
+(1 row)
+
+step doreturn2: INSERT INTO ints(key, val) VALUES(1, 'doreturn2'), (1, 'doreturn3') ON CONFLICT (key) DO RETURN RETURNING *; <waiting ...>
+step c1: COMMIT;
+step doreturn2: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step c2: COMMIT;
+step show: SELECT * FROM ints;
+key|val      
+---+---------
+  1|doreturn1
+(1 row)
+
+
+starting permutation: beginrr1 beginrr2 doreturn2 doreturn1 c2 c1 show
+step beginrr1: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step beginrr2: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step doreturn2: INSERT INTO ints(key, val) VALUES(1, 'doreturn2'), (1, 'doreturn3') ON CONFLICT (key) DO RETURN RETURNING *;
+key|val      
+---+---------
+  1|doreturn2
+  1|doreturn2
+(2 rows)
+
+step doreturn1: INSERT INTO ints(key, val) VALUES(1, 'doreturn1') ON CONFLICT (key) DO RETURN RETURNING *; <waiting ...>
+step c2: COMMIT;
+step doreturn1: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step c1: COMMIT;
+step show: SELECT * FROM ints;
+key|val      
+---+---------
+  1|doreturn2
+(1 row)
+
+
+starting permutation: begins1 begins2 doreturn1 c1 doreturn2 c2 show
+step begins1: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step begins2: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step doreturn1: INSERT INTO ints(key, val) VALUES(1, 'doreturn1') ON CONFLICT (key) DO RETURN RETURNING *;
+key|val      
+---+---------
+  1|doreturn1
+(1 row)
+
+step c1: COMMIT;
+step doreturn2: INSERT INTO ints(key, val) VALUES(1, 'doreturn2'), (1, 'doreturn3') ON CONFLICT (key) DO RETURN RETURNING *;
+key|val      
+---+---------
+  1|doreturn1
+  1|doreturn1
+(2 rows)
+
+step c2: COMMIT;
+step show: SELECT * FROM ints;
+key|val      
+---+---------
+  1|doreturn1
+(1 row)
+
+
+starting permutation: begins1 begins2 doreturn2 c2 doreturn1 c1 show
+step begins1: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step begins2: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step doreturn2: INSERT INTO ints(key, val) VALUES(1, 'doreturn2'), (1, 'doreturn3') ON CONFLICT (key) DO RETURN RETURNING *;
+key|val      
+---+---------
+  1|doreturn2
+  1|doreturn2
+(2 rows)
+
+step c2: COMMIT;
+step doreturn1: INSERT INTO ints(key, val) VALUES(1, 'doreturn1') ON CONFLICT (key) DO RETURN RETURNING *;
+key|val      
+---+---------
+  1|doreturn2
+(1 row)
+
+step c1: COMMIT;
+step show: SELECT * FROM ints;
+key|val      
+---+---------
+  1|doreturn2
+(1 row)
+
+
+starting permutation: begins1 begins2 doreturn1 doreturn2 c1 c2 show
+step begins1: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step begins2: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step doreturn1: INSERT INTO ints(key, val) VALUES(1, 'doreturn1') ON CONFLICT (key) DO RETURN RETURNING *;
+key|val      
+---+---------
+  1|doreturn1
+(1 row)
+
+step doreturn2: INSERT INTO ints(key, val) VALUES(1, 'doreturn2'), (1, 'doreturn3') ON CONFLICT (key) DO RETURN RETURNING *; <waiting ...>
+step c1: COMMIT;
+step doreturn2: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step c2: COMMIT;
+step show: SELECT * FROM ints;
+key|val      
+---+---------
+  1|doreturn1
+(1 row)
+
+
+starting permutation: begins1 begins2 doreturn2 doreturn1 c2 c1 show
+step begins1: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step begins2: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step doreturn2: INSERT INTO ints(key, val) VALUES(1, 'doreturn2'), (1, 'doreturn3') ON CONFLICT (key) DO RETURN RETURNING *;
+key|val      
+---+---------
+  1|doreturn2
+  1|doreturn2
+(2 rows)
+
+step doreturn1: INSERT INTO ints(key, val) VALUES(1, 'doreturn1') ON CONFLICT (key) DO RETURN RETURNING *; <waiting ...>
+step c2: COMMIT;
+step doreturn1: <... completed>
+ERROR:  could not serialize access due to concurrent update
+step c1: COMMIT;
+step show: SELECT * FROM ints;
+key|val      
+---+---------
+  1|doreturn2
+(1 row)
+

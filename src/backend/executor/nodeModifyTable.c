@@ -986,6 +986,29 @@ ExecInsert(ModifyTableContext *context,
 					else
 						goto vlock;
 				}
+				else if (onconflict == ONCONFLICT_RETURN && resultRelInfo->ri_projectReturning)
+				{
+					/*
+					 * In case of ON CONFLICT DO RETURN, fetch the tuple and
+					 * verify that it is visible to the executor's MVCC
+					 * snapshot at higher isolation levels.
+					 *
+					 * Using ExecGetReturningSlot() to store the tuple isn't that
+					 * pretty, but we can't trivially use the input slot, because
+					 * it might not be of a compatible type. As there's no conflicting
+					 * usage of ExecGetReturningSlot() in the DO RETURN case...
+					 */
+					TupleTableSlot *returning = ExecGetReturningSlot(estate, resultRelInfo);
+
+					if (!table_tuple_fetch_row_version(resultRelationDesc, &conflictTid, SnapshotAny, returning))
+						elog(ERROR, "failed to fetch conflicting tuple for ON CONFLICT");
+
+					ExecCheckTupleVisible(estate, resultRelationDesc, returning);
+					result = ExecProcessReturning(resultRelInfo, returning, planSlot);
+					ExecClearTuple(returning);
+					InstrCountTuples2(&mtstate->ps, 1);
+					return result;
+				}
 				else
 				{
 					/*
@@ -999,7 +1022,6 @@ ExecInsert(ModifyTableContext *context,
 					 * type. As there's no conflicting usage of
 					 * ExecGetReturningSlot() in the DO NOTHING case...
 					 */
-					Assert(onconflict == ONCONFLICT_NOTHING);
 					ExecCheckTIDVisible(estate, resultRelInfo, &conflictTid,
 										ExecGetReturningSlot(estate, resultRelInfo));
 					InstrCountTuples2(&mtstate->ps, 1);
